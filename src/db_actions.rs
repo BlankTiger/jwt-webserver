@@ -4,9 +4,9 @@ use color_eyre::Report;
 use diesel::prelude::*;
 use std::env;
 
-fn establish_connection() -> Result<SqliteConnection, Report> {
+fn establish_connection() -> Result<PgConnection, Report> {
     let database_url = env::var("DATABASE_URL")?;
-    Ok(SqliteConnection::establish(&database_url)?)
+    Ok(PgConnection::establish(&database_url)?)
 }
 
 pub fn create_products(new_products: &[NewProduct]) -> Result<(), Report> {
