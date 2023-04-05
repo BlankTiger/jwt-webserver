@@ -1,3 +1,4 @@
+mod models;
 mod schema;
 
 use color_eyre::Report;
