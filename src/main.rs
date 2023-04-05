@@ -1,8 +1,10 @@
+mod db_actions;
 mod models;
 mod schema;
 
 use color_eyre::Report;
-use diesel::prelude::*;
+use db_actions::{create_products, get_all_products};
+use models::NewProduct;
 use std::env;
 use tracing::info;
 
@@ -29,14 +31,32 @@ fn setup() -> Result<(), Report> {
     Ok(())
 }
 
-fn establish_connection() -> Result<SqliteConnection, Report> {
-    let database_url = env::var("DATABASE_URL")?;
-    Ok(SqliteConnection::establish(&database_url)?)
-}
-
 fn main() -> Result<(), Report> {
     setup()?;
-    let conn = establish_connection()?;
-    info!("Everything is fine!");
+    let new_products = vec![
+        NewProduct {
+            name: "Product 1",
+            price: &1.0,
+            available: &true,
+        },
+        NewProduct {
+            name: "Product 2",
+            price: &2.0,
+            available: &false,
+        },
+        NewProduct {
+            name: "Product 3",
+            price: &3.0,
+            available: &true,
+        },
+    ];
+
+    create_products(&new_products)?;
+    let products = get_all_products()?;
+
+    for product in products {
+        info!("{:?}", product);
+    }
+
     Ok(())
 }
