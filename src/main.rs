@@ -3,10 +3,9 @@ mod models;
 mod schema;
 
 use color_eyre::Report;
-use db_actions::{create_products, get_all_products};
-use models::NewProduct;
-use std::env;
+use db_actions::{DbMockData, OrderRepository};
 use tracing::info;
+use std::env;
 
 fn setup() -> Result<(), Report> {
     use dotenvy::dotenv;
@@ -33,29 +32,17 @@ fn setup() -> Result<(), Report> {
 
 fn main() -> Result<(), Report> {
     setup()?;
-    let new_products = vec![
-        NewProduct {
-            name: "Product 1",
-            price: &1.0,
-            available: &true,
-        },
-        NewProduct {
-            name: "Product 2",
-            price: &2.0,
-            available: &false,
-        },
-        NewProduct {
-            name: "Product 3",
-            price: &3.0,
-            available: &true,
-        },
-    ];
 
-    create_products(&new_products)?;
-    let products = get_all_products()?;
+    let db_mock_data = DbMockData::new();
+    db_mock_data.clear()?;
+    db_mock_data.fill()?;
 
-    for product in products {
-        info!("{:?}", product);
+    let all_orders = OrderRepository::get_all_orders()?;
+    for customer_order in all_orders {
+        info!("Orders for customer <{:?}>:", customer_order.0);
+        for order in customer_order.1 {
+            info!("    - {:?}", order);
+        }
     }
 
     Ok(())

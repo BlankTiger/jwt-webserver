@@ -1,12 +1,12 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
-#[derive(Queryable, Selectable, Debug)]
+#[derive(Identifiable, Queryable, Selectable, Debug, Hash, PartialEq, Eq)]
 #[diesel(table_name = crate::schema::products)]
 pub struct Product {
     pub id: i32,
     pub name: String,
-    pub price: f32,
+    pub price: i32,
     pub available: bool,
 }
 
@@ -14,11 +14,11 @@ pub struct Product {
 #[diesel(table_name = crate::schema::products)]
 pub struct NewProduct<'a> {
     pub name: &'a str,
-    pub price: &'a f32,
+    pub price: &'a i32,
     pub available: &'a bool,
 }
 
-#[derive(Queryable, Selectable, Debug)]
+#[derive(Identifiable, Queryable, Selectable, Debug)]
 #[diesel(table_name = crate::schema::customers)]
 pub struct Customer {
     pub id: i32,
@@ -33,9 +33,9 @@ pub struct NewCustomer<'a> {
     pub address: &'a str,
 }
 
-#[derive(Queryable, Selectable, Associations, Debug)]
-#[diesel(table_name = crate::schema::orders)]
+#[derive(Identifiable, Queryable, Selectable, Associations, Debug)]
 #[diesel(belongs_to(Customer))]
+#[diesel(table_name = crate::schema::orders)]
 pub struct Order {
     pub id: i32,
     pub customer_id: i32,
@@ -43,7 +43,7 @@ pub struct Order {
     pub created_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, PartialEq, Eq, Hash)]
 #[diesel(table_name = crate::schema::orders)]
 pub struct NewOrder<'a> {
     pub customer_id: &'a i32,
@@ -51,10 +51,10 @@ pub struct NewOrder<'a> {
     pub created_at: &'a NaiveDateTime,
 }
 
-#[derive(Queryable, Selectable, Associations, Debug)]
-#[diesel(table_name = crate::schema::products_in_orders)]
+#[derive(Identifiable, Queryable, Selectable, Associations, Debug)]
 #[diesel(belongs_to(Product))]
 #[diesel(belongs_to(Order))]
+#[diesel(table_name = crate::schema::products_in_orders)]
 #[diesel(primary_key(product_id, order_id))]
 pub struct ProductInOrder {
     pub product_id: i32,

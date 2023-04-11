@@ -10,6 +10,6 @@
 create table products (
 	id serial primary key,
 	name text not null,
-	price real not null,
+	price int not null,
 	available boolean not null
 );

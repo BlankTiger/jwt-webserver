@@ -13,7 +13,7 @@ diesel::table! {
         id -> Int4,
         customer_id -> Int4,
         status -> Text,
-        created_at -> Nullable<Timestamp>,
+        created_at -> Timestamp,
     }
 }
 
@@ -21,7 +21,7 @@ diesel::table! {
     products (id) {
         id -> Int4,
         name -> Text,
-        price -> Float4,
+        price -> Int4,
         available -> Bool,
     }
 }
