@@ -6,8 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+chrono = "0.4.24"
 color-eyre = "0.6.2"
-diesel = { version = "2.0.3", features = ["sqlite", "postgres"] }
+diesel = { version = "2.0.3", features = ["sqlite", "postgres", "chrono"] }
 dotenvy = "0.15.7"
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
