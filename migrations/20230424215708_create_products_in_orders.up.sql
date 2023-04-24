@@ -1,4 +1,4 @@
--- Your SQL goes here
+-- Add up migration script here
 create table if not exists products_in_orders (
 	order_id serial references orders(id),
 	product_id serial references products(id),
