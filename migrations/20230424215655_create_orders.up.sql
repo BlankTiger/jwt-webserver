@@ -1,4 +1,4 @@
--- Your SQL goes here
+-- Add up migration script here
 create table if not exists orders (
 	id serial primary key,
 	customer_id serial references customers(id),

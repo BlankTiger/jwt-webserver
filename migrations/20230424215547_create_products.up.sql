@@ -1,3 +1,4 @@
+-- Add up migration script here
 -- create products table in sqlite3, id, name, price, available
 -- create table products (
 -- 	id integer not null primary key autoincrement,

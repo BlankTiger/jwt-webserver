@@ -1,13 +1,13 @@
 mod db_actions;
 mod models;
-mod schema;
 
 use color_eyre::Report;
 use db_actions::{DbMockData, OrderRepository};
-use tracing::info;
 use std::env;
+use tracing::info;
 
-fn setup() -> Result<(), Report> {
+// TODO: move this to setup.rs
+async fn setup() -> Result<(), Report> {
     use dotenvy::dotenv;
     use tracing_subscriber::EnvFilter;
 
@@ -27,20 +27,25 @@ fn setup() -> Result<(), Report> {
         .with_env_filter(EnvFilter::from_default_env())
         .init();
 
+    let pool = db_actions::get_pool().await?;
+    sqlx::migrate!().run(&pool).await?;
+
     Ok(())
 }
 
-fn main() -> Result<(), Report> {
-    setup()?;
+#[tokio::main]
+async fn main() -> Result<(), Report> {
+    setup().await?;
 
     let db_mock_data = DbMockData::new();
-    db_mock_data.clear()?;
-    db_mock_data.fill()?;
+    db_mock_data.clear().await?;
+    db_mock_data.fill().await?;
 
-    let all_orders = OrderRepository::get_all_orders()?;
-    for customer_order in all_orders {
-        info!("Orders for customer <{:?}>:", customer_order.0);
-        for order in customer_order.1 {
+    let pool = &db_actions::get_pool().await?;
+    let all_orders = OrderRepository::get_all_orders(pool).await?;
+    for (customer, customers_orders) in all_orders.iter() {
+        info!("Orders for customer <{:?}>:", customer);
+        for order in customers_orders {
             info!("    - {:?}", order);
         }
     }
