@@ -1,16 +1,16 @@
 use crate::db_actions::{get_pool, Clearable, MockFillable};
 
-use super::models::product::*;
+use crate::models::product::*;
 use super::PG_LIMIT;
 use async_trait::async_trait;
 use color_eyre::Report;
 use sqlx::{PgPool, QueryBuilder};
 use tracing::info;
 
-pub struct ProductRepository;
+pub struct ProductService;
 
 #[async_trait]
-impl MockFillable for ProductRepository {
+impl MockFillable for ProductService {
     async fn fill_with_mocked_data(&self) -> Result<(), Report> {
         let new_products = [
             Product {
@@ -28,13 +28,13 @@ impl MockFillable for ProductRepository {
         ];
 
         let pool = get_pool().await?;
-        ProductRepository::create_products(&pool, &new_products).await?;
+        ProductService::create_products(&pool, &new_products).await?;
         Ok(())
     }
 }
 
 #[async_trait]
-impl Clearable for ProductRepository {
+impl Clearable for ProductService {
     async fn clear(&self) -> Result<(), Report> {
         let pool = get_pool().await?;
         sqlx::query!("delete from products").execute(&pool).await?;
@@ -42,7 +42,7 @@ impl Clearable for ProductRepository {
     }
 }
 
-impl ProductRepository {
+impl ProductService {
     pub async fn create_product(pool: &PgPool, new_product: Product) -> Result<(), Report> {
         sqlx::query("insert into products (name, price, available) values (?, ?, ?)")
             .bind(new_product.name)
