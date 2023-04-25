@@ -7,7 +7,7 @@ use axum::{
 };
 use chrono::NaiveDateTime;
 use serde_json::Value;
-use tracing::info;
+use tracing::{info, warn};
 
 use crate::services::order_service::OrderService;
 
@@ -15,20 +15,18 @@ pub async fn get_order(
     State(pool): State<DbPool>,
     Path(id): Path<i32>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let response = Json(
-        OrderService::get_order(&pool, id)
-            .await
-            .map_err(|_| StatusCode::NOT_FOUND)?,
-    );
+    let response = Json(OrderService::get_order(&pool, id).await.map_err(|e| {
+        warn!("{e}");
+        StatusCode::NOT_FOUND
+    })?);
     Ok(response)
 }
 
 pub async fn get_all_orders(State(pool): State<DbPool>) -> Result<impl IntoResponse, StatusCode> {
-    let response = Json(
-        OrderService::get_all_orders(&pool)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
-    );
+    let response = Json(OrderService::get_all_orders(&pool).await.map_err(|e| {
+        warn!("{e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?);
     Ok(response)
 }
 
@@ -41,7 +39,10 @@ pub async fn create_order(
     let response = Json(
         OrderService::create_order(&pool, order)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+            .map_err(|e| {
+                warn!("{e}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?,
     );
     Ok(response)
 }
@@ -58,7 +59,10 @@ pub async fn update_order(
     let response = Json(
         OrderService::update_order(&pool, order)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+            .map_err(|e| {
+                warn!("{e}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?,
     );
 
     Ok(response)
@@ -74,7 +78,10 @@ pub async fn partial_update_order(
 
     let mut order_with_products = OrderService::get_order_with_products(&pool, id)
         .await
-        .map_err(|_| StatusCode::NOT_FOUND)?;
+        .map_err(|e| {
+            warn!("{e}");
+            StatusCode::NOT_FOUND
+        })?;
 
     info!(
         "Received body_map: {:?}\nTo update: {:?}",
@@ -96,7 +103,10 @@ pub async fn partial_update_order(
                     value.as_str().ok_or(StatusCode::BAD_REQUEST)?,
                     "%Y-%m-%d %H:%M:%S",
                 )
-                .map_err(|_| StatusCode::BAD_REQUEST)?
+                .map_err(|e| {
+                    warn!("{e}");
+                    StatusCode::BAD_REQUEST
+                })?
             }
             "products" => {
                 order_with_products.products = value
@@ -105,7 +115,12 @@ pub async fn partial_update_order(
                     .iter()
                     .map(|(key, value)| -> (i32, i32) {
                         (
-                            key.parse::<i32>().map_err(|_| StatusCode::BAD_REQUEST).unwrap(),
+                            key.parse::<i32>()
+                                .map_err(|e| {
+                                    warn!("{e}");
+                                    StatusCode::BAD_REQUEST
+                                })
+                                .unwrap(),
                             value.as_i64().ok_or(StatusCode::BAD_REQUEST).unwrap() as i32,
                         )
                     })
@@ -118,7 +133,10 @@ pub async fn partial_update_order(
     let response = Json(
         OrderService::update_order(&pool, order_with_products)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+            .map_err(|e| {
+                warn!("{e}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?,
     );
 
     Ok(response)

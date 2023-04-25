@@ -177,7 +177,7 @@ impl OrderService {
         Ok(all_orders)
     }
 
-    pub async fn create_order(pool: &PgPool, new_order: OrderWithProducts) -> Result<(), Report> {
+    pub async fn create_order(pool: &PgPool, new_order: OrderWithProducts) -> Result<i32, Report> {
         let curr_order_row: (i32,) = sqlx::query_as(
             "insert into orders (customer_id, status, created_at) values ($1, $2, $3) returning id",
         )
@@ -214,7 +214,7 @@ impl OrderService {
         let query = query_builder.build();
         query.execute(pool).await?;
 
-        Ok(())
+        Ok(curr_order_id)
     }
 
     pub async fn update_order(pool: &PgPool, order: OrderWithProducts) -> Result<(), Report> {

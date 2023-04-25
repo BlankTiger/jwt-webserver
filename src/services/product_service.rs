@@ -43,17 +43,17 @@ impl Clearable for ProductService {
 }
 
 impl ProductService {
-    pub async fn create_product(pool: &PgPool, new_product: Product) -> Result<(), Report> {
-        sqlx::query!(
-            "insert into products (name, price, available) values ($1, $2, $3)",
-            new_product.name,
-            new_product.price,
-            new_product.available
+    pub async fn create_product(pool: &PgPool, new_product: Product) -> Result<i32, Report> {
+        let new_product_row: (i32,) = sqlx::query_as(
+            "insert into products (name, price, available) values ($1, $2, $3) returning id",
         )
-        .execute(pool)
+        .bind(new_product.name)
+        .bind(new_product.price)
+        .bind(new_product.available)
+        .fetch_one(pool)
         .await?;
 
-        Ok(())
+        Ok(new_product_row.0)
     }
 
     pub async fn update_product(pool: &PgPool, updated_product: Product) -> Result<(), Report> {

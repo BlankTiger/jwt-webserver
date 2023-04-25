@@ -41,16 +41,15 @@ impl Clearable for CustomerService {
 }
 
 impl CustomerService {
-    pub async fn create_customer(pool: &PgPool, new_customer: Customer) -> Result<(), Report> {
-        sqlx::query!(
-            "insert into customers (name, address) values ($1, $2)",
-            new_customer.name,
-            new_customer.address
-        )
-        .execute(pool)
-        .await?;
+    pub async fn create_customer(pool: &PgPool, new_customer: Customer) -> Result<i32, Report> {
+        let new_customer_row: (i32,) =
+            sqlx::query_as("insert into customers (name, address) values ($1, $2) returning id")
+                .bind(new_customer.name)
+                .bind(new_customer.address)
+                .fetch_one(pool)
+                .await?;
 
-        Ok(())
+        Ok(new_customer_row.0)
     }
 
     pub async fn create_customers(pool: &PgPool, new_customers: &[Customer]) -> Result<(), Report> {

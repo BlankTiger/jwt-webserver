@@ -6,7 +6,7 @@ use axum::{
     Json,
 };
 use serde_json::Value;
-use tracing::info;
+use tracing::{info, warn};
 
 use crate::services::customer_service::CustomerService;
 
@@ -17,7 +17,10 @@ pub async fn get_customer(
     let response = Json(
         CustomerService::get_customer(&pool, id)
             .await
-            .map_err(|_| StatusCode::NOT_FOUND)?,
+            .map_err(|e| {
+                warn!("{e}");
+                StatusCode::NOT_FOUND
+            })?,
     );
     Ok(response)
 }
@@ -28,7 +31,10 @@ pub async fn get_all_customers(
     let response = Json(
         CustomerService::get_all_customers(&pool)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+            .map_err(|e| {
+                warn!("{e}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?,
     );
     Ok(response)
 }
@@ -40,7 +46,10 @@ pub async fn create_customer(
     let response = Json(
         CustomerService::create_customer(&pool, customer)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+            .map_err(|e| {
+                warn!("{e}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?,
     );
     Ok(response)
 }
@@ -57,7 +66,10 @@ pub async fn update_customer(
     let response = Json(
         CustomerService::update_customer(&pool, customer)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+            .map_err(|e| {
+                warn!("{e}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?,
     );
     Ok(response)
 }
@@ -71,7 +83,10 @@ pub async fn partial_update_customer(
     body_map.remove("id");
     let mut customer_with_id = CustomerService::get_customer(&pool, id)
         .await
-        .map_err(|_| StatusCode::NOT_FOUND)?;
+        .map_err(|e| {
+            warn!("{e}");
+            StatusCode::NOT_FOUND
+        })?;
 
     info!(
         "Received body_map: {:?}\nTo update: {:?}",
@@ -94,7 +109,10 @@ pub async fn partial_update_customer(
     let response = Json(
         CustomerService::update_customer(&pool, customer_with_id)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+            .map_err(|e| {
+                warn!("{e}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?,
     );
     Ok(response)
 }

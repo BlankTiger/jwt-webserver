@@ -14,20 +14,18 @@ pub async fn get_product(
     State(pool): State<DbPool>,
     Path(id): Path<i32>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let response = Json(
-        ProductService::get_product(&pool, id)
-            .await
-            .map_err(|_| StatusCode::NOT_FOUND)?,
-    );
+    let response = Json(ProductService::get_product(&pool, id).await.map_err(|e| {
+        warn!("{e}");
+        StatusCode::NOT_FOUND
+    })?);
     Ok(response)
 }
 
 pub async fn get_all_products(State(pool): State<DbPool>) -> Result<impl IntoResponse, StatusCode> {
-    let response = Json(
-        ProductService::get_all_products(&pool)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
-    );
+    let response = Json(ProductService::get_all_products(&pool).await.map_err(|e| {
+        warn!("{e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?);
     Ok(response)
 }
 
@@ -36,10 +34,14 @@ pub async fn create_product(
     Json(product): Json<Product>,
 ) -> Result<impl IntoResponse, StatusCode> {
     info!("Received product: {:?}", product);
+
     let response = Json(
         ProductService::create_product(&pool, product)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+            .map_err(|e| {
+                warn!("{e}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?,
     );
     Ok(response)
 }
@@ -56,7 +58,10 @@ pub async fn update_product(
     let response = Json(
         ProductService::update_product(&pool, product)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+            .map_err(|e| {
+                warn!("{e}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?,
     );
     Ok(response)
 }
@@ -68,9 +73,10 @@ pub async fn partial_update_product(
 ) -> Result<impl IntoResponse, StatusCode> {
     let body_map = body.as_object_mut().ok_or(StatusCode::BAD_REQUEST)?;
     body_map.remove("id");
-    let mut product_with_id = ProductService::get_product(&pool, id)
-        .await
-        .map_err(|_| StatusCode::NOT_FOUND)?;
+    let mut product_with_id = ProductService::get_product(&pool, id).await.map_err(|e| {
+        warn!("{e}");
+        StatusCode::NOT_FOUND
+    })?;
 
     info!(
         "Received body_map: {:?}\nTo update: {:?}",
@@ -95,7 +101,10 @@ pub async fn partial_update_product(
     let response = Json(
         ProductService::update_product(&pool, product_with_id)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+            .map_err(|e| {
+                warn!("{e}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?,
     );
     Ok(response)
 }
