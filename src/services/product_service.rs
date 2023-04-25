@@ -1,7 +1,7 @@
 use crate::db_actions::{get_pool, Clearable, MockFillable};
 
-use crate::models::product::*;
 use super::PG_LIMIT;
+use crate::models::product::*;
 use async_trait::async_trait;
 use color_eyre::Report;
 use sqlx::{PgPool, QueryBuilder};
@@ -44,12 +44,28 @@ impl Clearable for ProductService {
 
 impl ProductService {
     pub async fn create_product(pool: &PgPool, new_product: Product) -> Result<(), Report> {
-        sqlx::query("insert into products (name, price, available) values (?, ?, ?)")
-            .bind(new_product.name)
-            .bind(new_product.price)
-            .bind(new_product.available)
-            .execute(pool)
-            .await?;
+        sqlx::query!(
+            "insert into products (name, price, available) values ($1, $2, $3)",
+            new_product.name,
+            new_product.price,
+            new_product.available
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn update_product(pool: &PgPool, updated_product: Product) -> Result<(), Report> {
+        sqlx::query!(
+            "update products set name = $1, price = $2, available = $3 where id = $4",
+            updated_product.name,
+            updated_product.price,
+            updated_product.available,
+            updated_product.id
+        )
+        .execute(pool)
+        .await?;
 
         Ok(())
     }
@@ -71,6 +87,14 @@ impl ProductService {
         query.execute(pool).await?;
 
         Ok(())
+    }
+
+    pub async fn get_product(pool: &PgPool, id: i32) -> Result<Product, Report> {
+        Ok(
+            sqlx::query_as!(Product, "select * from products where id = $1", id)
+                .fetch_one(pool)
+                .await?,
+        )
     }
 
     pub async fn get_all_products(pool: &PgPool) -> Result<Vec<Product>, Report> {
