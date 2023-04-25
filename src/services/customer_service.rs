@@ -42,11 +42,13 @@ impl Clearable for CustomerService {
 
 impl CustomerService {
     pub async fn create_customer(pool: &PgPool, new_customer: Customer) -> Result<(), Report> {
-        sqlx::query("insert into customers (name, address) values (?, ?)")
-            .bind(new_customer.name)
-            .bind(new_customer.address)
-            .execute(pool)
-            .await?;
+        sqlx::query!(
+            "insert into customers (name, address) values ($1, $2)",
+            new_customer.name,
+            new_customer.address
+        )
+        .execute(pool)
+        .await?;
 
         Ok(())
     }
@@ -69,9 +71,30 @@ impl CustomerService {
         Ok(())
     }
 
+    pub async fn get_customer(pool: &PgPool, id: i32) -> Result<Customer, Report> {
+        Ok(
+            sqlx::query_as!(Customer, "select * from customers where id = $1", id)
+                .fetch_one(pool)
+                .await?,
+        )
+    }
+
     pub async fn get_all_customers(pool: &PgPool) -> Result<Vec<Customer>, Report> {
         Ok(sqlx::query_as!(Customer, "select * from customers")
             .fetch_all(pool)
             .await?)
+    }
+
+    pub async fn update_customer(pool: &PgPool, updated_customer: Customer) -> Result<(), Report> {
+        sqlx::query!(
+            "update customers set name = $1, address = $2 where id = $3",
+            updated_customer.name,
+            updated_customer.address,
+            updated_customer.id
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
     }
 }

@@ -118,26 +118,149 @@ impl OrderService {
         Ok(())
     }
 
-    pub async fn get_all_orders(
-        self,
+    pub async fn get_order(pool: &PgPool, order_id: i32) -> Result<Order, Report> {
+        let order = sqlx::query_as!(Order, "select * from orders where id = $1", order_id)
+            .fetch_one(pool)
+            .await?;
+
+        Ok(order)
+    }
+
+    pub async fn get_order_with_products(
         pool: &PgPool,
-    ) -> Result<HashMap<Customer, Vec<Order>>, Report> {
-        let mut all_orders = HashMap::new();
+        order_id: i32,
+    ) -> Result<OrderWithProducts, Report> {
+        let order = sqlx::query_as!(Order, "select * from orders where id = $1", order_id)
+            .fetch_one(pool)
+            .await?;
+
+        let products_in_order = sqlx::query_as!(
+            ProductInOrder,
+            "select * from products_in_orders where order_id = $1",
+            order_id
+        )
+        .fetch_all(pool)
+        .await?;
+
+        let mut products = HashMap::new();
+        for product in products_in_order {
+            products.insert(product.product_id, product.quantity);
+        }
+
+        Ok(OrderWithProducts {
+            id: order.id,
+            customer_id: order.customer_id,
+            status: order.status,
+            created_at: order.created_at,
+            products,
+        })
+    }
+
+    pub async fn get_all_orders(pool: &PgPool) -> Result<Vec<Order>, Report> {
+        let mut all_orders = Vec::new();
         let all_customers = sqlx::query_as!(Customer, "select * from customers")
             .fetch_all(pool)
             .await?;
 
         for customer in all_customers {
-            let customer_orders = sqlx::query_as!(
+            let mut customer_orders = sqlx::query_as!(
                 Order,
                 "select * from orders where customer_id = $1",
                 customer.id
             )
             .fetch_all(pool)
             .await?;
-            all_orders.insert(customer, customer_orders);
+
+            all_orders.append(&mut customer_orders);
         }
 
         Ok(all_orders)
+    }
+
+    pub async fn create_order(pool: &PgPool, new_order: OrderWithProducts) -> Result<(), Report> {
+        let curr_order_row: (i32,) = sqlx::query_as(
+            "insert into orders (customer_id, status, created_at) values ($1, $2, $3) returning id",
+        )
+        .bind(new_order.customer_id)
+        .bind(&new_order.status)
+        .bind(Local::now().naive_local())
+        .fetch_one(pool)
+        .await?;
+        let curr_order_id = curr_order_row.0;
+
+        let products_in_order: Vec<ProductInOrder> = new_order
+            .products
+            .iter()
+            .map(|(product, amount)| ProductInOrder {
+                order_id: curr_order_id,
+                product_id: *product,
+                quantity: *amount,
+            })
+            .collect();
+
+        let mut query_builder =
+            QueryBuilder::new("insert into products_in_orders (order_id, product_id, quantity) ");
+        query_builder.push_values(
+            products_in_order.into_iter().take(PG_LIMIT as usize / 3),
+            |mut builder, product_in_order| {
+                builder
+                    .push_bind(product_in_order.order_id)
+                    .push_bind(product_in_order.product_id)
+                    .push_bind(product_in_order.quantity);
+            },
+        );
+
+        info!("Executing group insert query: {}", query_builder.sql());
+        let query = query_builder.build();
+        query.execute(pool).await?;
+
+        Ok(())
+    }
+
+    pub async fn update_order(pool: &PgPool, order: OrderWithProducts) -> Result<(), Report> {
+        sqlx::query!(
+            "update orders set customer_id = $1, status = $2, created_at = $3 where id = $4",
+            order.customer_id,
+            order.status,
+            order.created_at,
+            order.id
+        )
+        .execute(pool)
+        .await?;
+
+        sqlx::query!(
+            "delete from products_in_orders where order_id = $1",
+            order.id
+        )
+        .execute(pool)
+        .await?;
+
+        let products_in_order: Vec<ProductInOrder> = order
+            .products
+            .iter()
+            .map(|(product, amount)| ProductInOrder {
+                order_id: order.id,
+                product_id: *product,
+                quantity: *amount,
+            })
+            .collect();
+
+        let mut query_builder =
+            QueryBuilder::new("insert into products_in_orders (order_id, product_id, quantity) ");
+        query_builder.push_values(
+            products_in_order.into_iter().take(PG_LIMIT as usize / 3),
+            |mut builder, product_in_order| {
+                builder
+                    .push_bind(product_in_order.order_id)
+                    .push_bind(product_in_order.product_id)
+                    .push_bind(product_in_order.quantity);
+            },
+        );
+
+        info!("Executing group insert query: {}", query_builder.sql());
+        let query = query_builder.build();
+        query.execute(pool).await?;
+
+        Ok(())
     }
 }
