@@ -12,7 +12,7 @@ async fn main() -> Result<(), Report> {
     db_mock_data.fill().await?;
 
     let pool = &get_pool().await?;
-    let all_orders = db_mock_data.order_repository.get_all_orders(pool).await?;
+    let all_orders = db_mock_data.order_service.get_all_orders(pool).await?;
     for (customer, customers_orders) in all_orders.iter() {
         info!("Orders for customer <{:?}>:", customer);
         for order in customers_orders {

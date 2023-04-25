@@ -4,13 +4,13 @@ use color_eyre::Report;
 use sqlx::{PgPool, QueryBuilder};
 use tracing::info;
 
-use super::models::customer::*;
+use crate::models::customer::*;
 use async_trait::async_trait;
 
-pub struct CustomerRepository;
+pub struct CustomerService;
 
 #[async_trait]
-impl MockFillable for CustomerRepository {
+impl MockFillable for CustomerService {
     async fn fill_with_mocked_data(&self) -> Result<(), Report> {
         let new_customers = [
             Customer {
@@ -26,13 +26,13 @@ impl MockFillable for CustomerRepository {
         ];
 
         let pool = get_pool().await?;
-        CustomerRepository::create_customers(&pool, &new_customers).await?;
+        CustomerService::create_customers(&pool, &new_customers).await?;
         Ok(())
     }
 }
 
 #[async_trait]
-impl Clearable for CustomerRepository {
+impl Clearable for CustomerService {
     async fn clear(&self) -> Result<(), Report> {
         let pool = get_pool().await?;
         sqlx::query!("delete from customers").execute(&pool).await?;
@@ -40,7 +40,7 @@ impl Clearable for CustomerRepository {
     }
 }
 
-impl CustomerRepository {
+impl CustomerService {
     pub async fn create_customer(pool: &PgPool, new_customer: Customer) -> Result<(), Report> {
         sqlx::query("insert into customers (name, address) values (?, ?)")
             .bind(new_customer.name)

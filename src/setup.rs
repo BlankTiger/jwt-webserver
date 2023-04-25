@@ -1,6 +1,6 @@
+use crate::db_actions;
 use color_eyre::Report;
 use std::env;
-use crate::db_actions;
 
 pub async fn setup() -> Result<(), Report> {
     use dotenvy::dotenv;

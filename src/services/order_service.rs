@@ -7,20 +7,20 @@ use tracing::info;
 
 use super::PG_LIMIT;
 
-use super::customer_repo::CustomerRepository;
-use super::models::{customer::*, order::*, product::*};
-use super::product_repo::ProductRepository;
+use super::customer_service::CustomerService;
+use super::product_service::ProductService;
+use crate::models::{customer::*, order::*, product::*};
 use async_trait::async_trait;
 
-pub struct OrderRepository;
+pub struct OrderService;
 
 #[async_trait]
-impl MockFillable for OrderRepository {
+impl MockFillable for OrderService {
     async fn fill_with_mocked_data(&self) -> Result<(), Report> {
         let pool = get_pool().await?;
         let mut customer_orders = HashMap::new();
-        let products_in_db = ProductRepository::get_all_products(&pool).await?;
-        let customers_in_db = CustomerRepository::get_all_customers(&pool).await?;
+        let products_in_db = ProductService::get_all_products(&pool).await?;
+        let customers_in_db = CustomerService::get_all_customers(&pool).await?;
 
         let new_order = Order {
             customer_id: customers_in_db[0].id,
@@ -54,14 +54,14 @@ impl MockFillable for OrderRepository {
         products_in_order.insert(&products_in_db[0], 3);
         products_in_order.insert(&products_in_db[1], 4);
         customer_orders.insert(new_order, products_in_order);
-        OrderRepository::create_orders(&pool, &customer_orders).await?;
+        OrderService::create_orders(&pool, &customer_orders).await?;
 
         Ok(())
     }
 }
 
 #[async_trait]
-impl Clearable for OrderRepository {
+impl Clearable for OrderService {
     async fn clear(&self) -> Result<(), Report> {
         let pool = get_pool().await?;
         sqlx::query!("delete from products_in_orders")
@@ -72,7 +72,7 @@ impl Clearable for OrderRepository {
     }
 }
 
-impl OrderRepository {
+impl OrderService {
     pub async fn create_orders(
         pool: &PgPool,
         customer_orders: &HashMap<Order, HashMap<&Product, i32>>,
@@ -118,7 +118,10 @@ impl OrderRepository {
         Ok(())
     }
 
-    pub async fn get_all_orders(self, pool: &PgPool) -> Result<HashMap<Customer, Vec<Order>>, Report> {
+    pub async fn get_all_orders(
+        self,
+        pool: &PgPool,
+    ) -> Result<HashMap<Customer, Vec<Order>>, Report> {
         let mut all_orders = HashMap::new();
         let all_customers = sqlx::query_as!(Customer, "select * from customers")
             .fetch_all(pool)

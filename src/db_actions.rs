@@ -3,8 +3,8 @@ use color_eyre::Report;
 use sqlx::postgres::PgPool;
 use std::env;
 
-use crate::repositories::{
-    customer_repo::CustomerRepository, order_repo::OrderRepository, product_repo::ProductRepository,
+use crate::services::{
+    customer_service::CustomerService, order_service::OrderService, product_service::ProductService,
 };
 
 // TODO: use cfg_if to use different pools for sqlite and postgres
@@ -24,9 +24,9 @@ pub trait Clearable {
 }
 
 pub struct DbMockData {
-    pub product_repository: ProductRepository,
-    pub order_repository: OrderRepository,
-    pub customer_repository: CustomerRepository,
+    pub product_service: ProductService,
+    pub order_service: OrderService,
+    pub customer_service: CustomerService,
 }
 
 impl Default for DbMockData {
@@ -38,23 +38,23 @@ impl Default for DbMockData {
 impl DbMockData {
     pub fn new() -> Self {
         DbMockData {
-            product_repository: ProductRepository {},
-            order_repository: OrderRepository {},
-            customer_repository: CustomerRepository {},
+            product_service: ProductService {},
+            order_service: OrderService {},
+            customer_service: CustomerService {},
         }
     }
 
     pub async fn fill(&self) -> Result<(), Report> {
-        self.customer_repository.fill_with_mocked_data().await?;
-        self.product_repository.fill_with_mocked_data().await?;
-        self.order_repository.fill_with_mocked_data().await?;
+        self.customer_service.fill_with_mocked_data().await?;
+        self.product_service.fill_with_mocked_data().await?;
+        self.order_service.fill_with_mocked_data().await?;
         Ok(())
     }
 
     pub async fn clear(&self) -> Result<(), Report> {
-        self.order_repository.clear().await?;
-        self.customer_repository.clear().await?;
-        self.product_repository.clear().await?;
+        self.order_service.clear().await?;
+        self.customer_service.clear().await?;
+        self.product_service.clear().await?;
         Ok(())
     }
 }
