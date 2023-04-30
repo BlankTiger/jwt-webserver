@@ -1,0 +1,81 @@
+GET http://localhost:3000/api/order/49
+GET http://localhost:3000/api/order/all
+GET http://localhost:3000/api/customer/33
+GET http://localhost:3000/api/customer/all
+GET http://localhost:3000/api/product/33
+GET http://localhost:3000/api/product/all
+
+
+POST http://localhost:3000/api/admin/product
+{
+	"id": 0,
+	"name": "New product",
+	"price": 600,
+	"available": true
+}
+
+POST http://localhost:3000/api/admin/customer
+{
+	"id": 0,
+	"name": "New customer",
+	"address": "Some address"
+}
+
+POST http://localhost:3000/api/admin/order
+{
+	"id": 0,
+	"customer_id": 35,
+	"status": "Done",
+	"created_at": "2023-04-25T08:41:23.104715",
+	"products": {
+		"34": 5,
+		"35": 15
+	}
+}
+
+
+PUT http://localhost:3000/api/admin/customer/35
+{
+	"id": 35,
+	"name": "Newer customer",
+	"address": "Some address"
+}
+
+PUT http://localhost:3000/api/admin/product/35
+{
+	"id": 35,
+	"name": "Newer product",
+	"price": 600,
+	"available": true
+}
+
+PUT http://localhost:3000/api/admin/order/52
+{
+	"id": 52,
+	"customer_id": 35,
+	"status": "In progress",
+	"created_at": "2023-04-25T08:41:23.104715",
+	"products": {
+		"34": 5,
+		"35": 15
+	}
+}
+
+
+PATCH http://localhost:3000/api/admin/customer/35
+{
+	"address": "Some other address"
+}
+
+PATCH http://localhost:3000/api/admin/product/35
+{
+	"price": 1000
+}
+
+PATCH http://localhost:3000/api/admin/order/52
+{
+	"products": {
+		"34": 800,
+		"35": 15
+	}
+}
