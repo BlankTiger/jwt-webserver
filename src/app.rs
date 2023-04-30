@@ -4,7 +4,7 @@ use axum::{
     routing::{get, patch, post, put},
     Router,
 };
-use color_eyre::Report;
+use color_eyre::Result;
 use std::env;
 use std::time::Duration;
 use tower::{BoxError, ServiceBuilder};
@@ -16,7 +16,7 @@ use crate::{
 
 pub type DbPool = sqlx::PgPool;
 
-pub async fn start_app() -> Result<(), Report> {
+pub async fn start_app() -> Result<()> {
     let pool = get_pool().await?;
     let router = build_router().with_state(pool);
     let addr = env::var("SERVER_ADDR")?;

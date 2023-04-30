@@ -1,6 +1,6 @@
 use crate::db_actions::{get_pool, Clearable, MockFillable};
 use chrono::Local;
-use color_eyre::Report;
+use color_eyre::Result;
 use sqlx::{PgPool, QueryBuilder};
 use std::collections::HashMap;
 use tracing::info;
@@ -16,7 +16,7 @@ pub struct OrderService;
 
 #[async_trait]
 impl MockFillable for OrderService {
-    async fn fill_with_mocked_data(&self) -> Result<(), Report> {
+    async fn fill_with_mocked_data(&self) -> Result<()> {
         let pool = get_pool().await?;
         let mut customer_orders = HashMap::new();
         let products_in_db = ProductService::get_all_products(&pool).await?;
@@ -62,7 +62,7 @@ impl MockFillable for OrderService {
 
 #[async_trait]
 impl Clearable for OrderService {
-    async fn clear(&self) -> Result<(), Report> {
+    async fn clear(&self) -> Result<()> {
         let pool = get_pool().await?;
         sqlx::query!("delete from products_in_orders")
             .execute(&pool)
@@ -76,7 +76,7 @@ impl OrderService {
     pub async fn create_orders(
         pool: &PgPool,
         customer_orders: &HashMap<Order, HashMap<&Product, i32>>,
-    ) -> Result<(), Report> {
+    ) -> Result<()> {
         for (new_order, products_in_order) in customer_orders.iter() {
             let curr_order_row: (i32,) = sqlx::query_as(
                 "insert into orders (customer_id, status, created_at) values ($1, $2, $3) returning id",
@@ -118,7 +118,7 @@ impl OrderService {
         Ok(())
     }
 
-    pub async fn get_order(pool: &PgPool, order_id: i32) -> Result<Order, Report> {
+    pub async fn get_order(pool: &PgPool, order_id: i32) -> Result<Order> {
         let order = sqlx::query_as!(Order, "select * from orders where id = $1", order_id)
             .fetch_one(pool)
             .await?;
@@ -129,7 +129,7 @@ impl OrderService {
     pub async fn get_order_with_products(
         pool: &PgPool,
         order_id: i32,
-    ) -> Result<OrderWithProducts, Report> {
+    ) -> Result<OrderWithProducts> {
         let order = sqlx::query_as!(Order, "select * from orders where id = $1", order_id)
             .fetch_one(pool)
             .await?;
@@ -156,7 +156,7 @@ impl OrderService {
         })
     }
 
-    pub async fn get_all_orders(pool: &PgPool) -> Result<Vec<Order>, Report> {
+    pub async fn get_all_orders(pool: &PgPool) -> Result<Vec<Order>> {
         let mut all_orders = Vec::new();
         let all_customers = sqlx::query_as!(Customer, "select * from customers")
             .fetch_all(pool)
@@ -177,7 +177,7 @@ impl OrderService {
         Ok(all_orders)
     }
 
-    pub async fn create_order(pool: &PgPool, new_order: OrderWithProducts) -> Result<i32, Report> {
+    pub async fn create_order(pool: &PgPool, new_order: OrderWithProducts) -> Result<i32> {
         let curr_order_row: (i32,) = sqlx::query_as(
             "insert into orders (customer_id, status, created_at) values ($1, $2, $3) returning id",
         )
@@ -217,7 +217,7 @@ impl OrderService {
         Ok(curr_order_id)
     }
 
-    pub async fn update_order(pool: &PgPool, order: OrderWithProducts) -> Result<(), Report> {
+    pub async fn update_order(pool: &PgPool, order: OrderWithProducts) -> Result<()> {
         sqlx::query!(
             "update orders set customer_id = $1, status = $2, created_at = $3 where id = $4",
             order.customer_id,

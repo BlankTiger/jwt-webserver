@@ -1,6 +1,6 @@
 use super::PG_LIMIT;
 use crate::db_actions::{get_pool, Clearable, MockFillable};
-use color_eyre::Report;
+use color_eyre::Result;
 use sqlx::{PgPool, QueryBuilder};
 use tracing::info;
 
@@ -11,7 +11,7 @@ pub struct CustomerService;
 
 #[async_trait]
 impl MockFillable for CustomerService {
-    async fn fill_with_mocked_data(&self) -> Result<(), Report> {
+    async fn fill_with_mocked_data(&self) -> Result<()> {
         let new_customers = [
             Customer {
                 name: "Customer 1".to_string(),
@@ -33,7 +33,7 @@ impl MockFillable for CustomerService {
 
 #[async_trait]
 impl Clearable for CustomerService {
-    async fn clear(&self) -> Result<(), Report> {
+    async fn clear(&self) -> Result<()> {
         let pool = get_pool().await?;
         sqlx::query!("delete from customers").execute(&pool).await?;
         Ok(())
@@ -41,7 +41,7 @@ impl Clearable for CustomerService {
 }
 
 impl CustomerService {
-    pub async fn create_customer(pool: &PgPool, new_customer: Customer) -> Result<i32, Report> {
+    pub async fn create_customer(pool: &PgPool, new_customer: Customer) -> Result<i32> {
         let new_customer_row: (i32,) =
             sqlx::query_as("insert into customers (name, address) values ($1, $2) returning id")
                 .bind(new_customer.name)
@@ -52,7 +52,7 @@ impl CustomerService {
         Ok(new_customer_row.0)
     }
 
-    pub async fn create_customers(pool: &PgPool, new_customers: &[Customer]) -> Result<(), Report> {
+    pub async fn create_customers(pool: &PgPool, new_customers: &[Customer]) -> Result<()> {
         let mut query_builder = QueryBuilder::new("insert into customers (name, address) ");
         query_builder.push_values(
             new_customers.iter().take(PG_LIMIT as usize / 3),
@@ -70,7 +70,7 @@ impl CustomerService {
         Ok(())
     }
 
-    pub async fn get_customer(pool: &PgPool, id: i32) -> Result<Customer, Report> {
+    pub async fn get_customer(pool: &PgPool, id: i32) -> Result<Customer> {
         Ok(
             sqlx::query_as!(Customer, "select * from customers where id = $1", id)
                 .fetch_one(pool)
@@ -78,13 +78,13 @@ impl CustomerService {
         )
     }
 
-    pub async fn get_all_customers(pool: &PgPool) -> Result<Vec<Customer>, Report> {
+    pub async fn get_all_customers(pool: &PgPool) -> Result<Vec<Customer>> {
         Ok(sqlx::query_as!(Customer, "select * from customers")
             .fetch_all(pool)
             .await?)
     }
 
-    pub async fn update_customer(pool: &PgPool, updated_customer: Customer) -> Result<(), Report> {
+    pub async fn update_customer(pool: &PgPool, updated_customer: Customer) -> Result<()> {
         sqlx::query!(
             "update customers set name = $1, address = $2 where id = $3",
             updated_customer.name,

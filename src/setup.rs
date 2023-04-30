@@ -1,10 +1,10 @@
 use crate::db_actions;
-use color_eyre::Report;
+use color_eyre::Result;
 use dotenvy::dotenv;
 use std::env;
 use tracing_subscriber::EnvFilter;
 
-pub async fn setup() -> Result<(), Report> {
+pub async fn setup() -> Result<()> {
     dotenv()?;
 
     setup_error_handling()?;
@@ -14,7 +14,7 @@ pub async fn setup() -> Result<(), Report> {
     Ok(())
 }
 
-fn setup_error_handling() -> Result<(), Report> {
+fn setup_error_handling() -> Result<()> {
     if env::var("RUST_LIB_BACKTRACE").is_err() {
         env::set_var("RUST_LIB_BACKTRACE", "1");
     }
@@ -33,7 +33,7 @@ fn setup_tracing() {
         .init();
 }
 
-async fn setup_database() -> Result<(), Report> {
+async fn setup_database() -> Result<()> {
     let pool = db_actions::get_pool().await?;
     sqlx::migrate!().run(&pool).await?;
 

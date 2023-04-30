@@ -3,7 +3,7 @@ use crate::db_actions::{get_pool, Clearable, MockFillable};
 use super::PG_LIMIT;
 use crate::models::product::*;
 use async_trait::async_trait;
-use color_eyre::Report;
+use color_eyre::Result;
 use sqlx::{PgPool, QueryBuilder};
 use tracing::info;
 
@@ -11,7 +11,7 @@ pub struct ProductService;
 
 #[async_trait]
 impl MockFillable for ProductService {
-    async fn fill_with_mocked_data(&self) -> Result<(), Report> {
+    async fn fill_with_mocked_data(&self) -> Result<()> {
         let new_products = [
             Product {
                 name: "Product 1".to_string(),
@@ -35,7 +35,7 @@ impl MockFillable for ProductService {
 
 #[async_trait]
 impl Clearable for ProductService {
-    async fn clear(&self) -> Result<(), Report> {
+    async fn clear(&self) -> Result<()> {
         let pool = get_pool().await?;
         sqlx::query!("delete from products").execute(&pool).await?;
         Ok(())
@@ -43,7 +43,7 @@ impl Clearable for ProductService {
 }
 
 impl ProductService {
-    pub async fn create_product(pool: &PgPool, new_product: Product) -> Result<i32, Report> {
+    pub async fn create_product(pool: &PgPool, new_product: Product) -> Result<i32> {
         let new_product_row: (i32,) = sqlx::query_as(
             "insert into products (name, price, available) values ($1, $2, $3) returning id",
         )
@@ -56,7 +56,7 @@ impl ProductService {
         Ok(new_product_row.0)
     }
 
-    pub async fn update_product(pool: &PgPool, updated_product: Product) -> Result<(), Report> {
+    pub async fn update_product(pool: &PgPool, updated_product: Product) -> Result<()> {
         sqlx::query!(
             "update products set name = $1, price = $2, available = $3 where id = $4",
             updated_product.name,
@@ -70,7 +70,7 @@ impl ProductService {
         Ok(())
     }
 
-    pub async fn create_products(pool: &PgPool, new_products: &[Product]) -> Result<(), Report> {
+    pub async fn create_products(pool: &PgPool, new_products: &[Product]) -> Result<()> {
         let mut query_builder = QueryBuilder::new("insert into products (name, price, available) ");
         query_builder.push_values(
             new_products.iter().take(PG_LIMIT as usize / 3),
@@ -89,7 +89,7 @@ impl ProductService {
         Ok(())
     }
 
-    pub async fn get_product(pool: &PgPool, id: i32) -> Result<Product, Report> {
+    pub async fn get_product(pool: &PgPool, id: i32) -> Result<Product> {
         Ok(
             sqlx::query_as!(Product, "select * from products where id = $1", id)
                 .fetch_one(pool)
@@ -97,7 +97,7 @@ impl ProductService {
         )
     }
 
-    pub async fn get_all_products(pool: &PgPool) -> Result<Vec<Product>, Report> {
+    pub async fn get_all_products(pool: &PgPool) -> Result<Vec<Product>> {
         Ok(sqlx::query_as!(Product, "select * from products")
             .fetch_all(pool)
             .await?)
