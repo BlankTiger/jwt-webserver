@@ -1,7 +1,7 @@
 use crate::db_actions::{get_pool, Clearable, MockFillable};
 
 use super::PG_LIMIT;
-use crate::models::product::*;
+use crate::models::Product;
 use async_trait::async_trait;
 use color_eyre::Result;
 use sqlx::{PgPool, QueryBuilder};

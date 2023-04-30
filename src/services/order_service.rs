@@ -9,7 +9,7 @@ use super::PG_LIMIT;
 
 use super::customer_service::CustomerService;
 use super::product_service::ProductService;
-use crate::models::{customer::*, order::*, product::*};
+use crate::models::*;
 use async_trait::async_trait;
 
 pub struct OrderService;

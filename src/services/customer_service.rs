@@ -4,7 +4,7 @@ use color_eyre::Result;
 use sqlx::{PgPool, QueryBuilder};
 use tracing::info;
 
-use crate::models::customer::*;
+use crate::models::Customer;
 use async_trait::async_trait;
 
 pub struct CustomerService;

@@ -1,7 +1,7 @@
 use color_eyre::Result;
 // use data::db_actions::DbMockData;
+use data::app::App;
 use data::setup::setup;
-use data::app::start_app;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -9,7 +9,6 @@ async fn main() -> Result<()> {
     // let db_mock_data = DbMockData::new();
     // db_mock_data.clear().await?;
     // db_mock_data.fill().await?;
-    start_app().await?;
+    App::new().start_app().await?;
     Ok(())
 }
-
