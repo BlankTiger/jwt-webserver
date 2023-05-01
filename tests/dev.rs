@@ -2,6 +2,7 @@ use std::{collections::HashMap, fmt::Display};
 
 use color_eyre::{eyre::eyre, Result};
 use data::models::Customer;
+use once_cell::sync::Lazy;
 use reqwest::{header::AUTHORIZATION, Client};
 use serde::Deserialize;
 use serde_json::json;
@@ -22,11 +23,15 @@ impl Display for AuthResponse {
     }
 }
 
-static URL: &str = "http://localhost:3000";
+static URL: Lazy<String> = Lazy::new(|| {
+    dotenvy::dotenv().ok();
+    "http://".to_string() + &std::env::var("SERVER_ADDR").expect("URL must be set")
+});
 
 macro_rules! test_get_request_no_auth_endpoints {
     ($a: expr) => {
-        let hc = httpc_test::new_client(URL)?;
+        let url = URL.to_string();
+        let hc = httpc_test::new_client(&url)?;
         for route in $a {
             hc.do_get(route).await?.print().await?;
         }
