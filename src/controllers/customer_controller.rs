@@ -8,7 +8,7 @@ use axum::{
 use serde_json::Value;
 use tracing::{info, warn};
 
-use crate::services::customer_service::CustomerService;
+use crate::services::CustomerService;
 
 pub struct CustomerController;
 

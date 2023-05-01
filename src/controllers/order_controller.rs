@@ -9,7 +9,7 @@ use chrono::NaiveDateTime;
 use serde_json::Value;
 use tracing::{info, warn};
 
-use crate::services::order_service::OrderService;
+use crate::services::OrderService;
 
 pub struct OrderController;
 

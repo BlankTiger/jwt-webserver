@@ -1,8 +1,11 @@
 use crate::db_actions;
 use color_eyre::Result;
 use dotenvy::dotenv;
+use once_cell::sync::Lazy;
 use std::env;
 use tracing_subscriber::EnvFilter;
+
+pub static PEPPER: Lazy<String> = Lazy::new(|| std::env::var("PEPPER").expect("PEPPER must be set"));
 
 pub async fn setup() -> Result<()> {
     dotenv()?;

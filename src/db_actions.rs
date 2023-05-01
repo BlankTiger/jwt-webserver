@@ -3,9 +3,7 @@ use color_eyre::Result;
 use sqlx::postgres::PgPool;
 use std::env;
 
-use crate::services::{
-    customer_service::CustomerService, order_service::OrderService, product_service::ProductService,
-};
+use crate::services::{CustomerService, OrderService, ProductService, UserService};
 
 // TODO: use cfg_if to use different pools for sqlite and postgres
 pub async fn get_pool() -> Result<PgPool> {
@@ -27,6 +25,7 @@ pub struct DbMockData {
     pub product_service: ProductService,
     pub order_service: OrderService,
     pub customer_service: CustomerService,
+    pub user_service: UserService,
 }
 
 impl Default for DbMockData {
@@ -41,6 +40,7 @@ impl DbMockData {
             product_service: ProductService {},
             order_service: OrderService {},
             customer_service: CustomerService {},
+            user_service: UserService {},
         }
     }
 
@@ -48,6 +48,7 @@ impl DbMockData {
         self.customer_service.fill_with_mocked_data().await?;
         self.product_service.fill_with_mocked_data().await?;
         self.order_service.fill_with_mocked_data().await?;
+        self.user_service.fill_with_mocked_data().await?;
         Ok(())
     }
 
@@ -55,6 +56,7 @@ impl DbMockData {
         self.order_service.clear().await?;
         self.customer_service.clear().await?;
         self.product_service.clear().await?;
+        self.user_service.clear().await?;
         Ok(())
     }
 }
