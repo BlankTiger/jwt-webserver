@@ -4,6 +4,12 @@ use dotenvy::dotenv;
 use once_cell::sync::Lazy;
 use std::env;
 use tracing_subscriber::EnvFilter;
+use crate::models::Keys;
+
+pub static KEYS: Lazy<Keys> = Lazy::new(|| {
+    let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    Keys::new(secret.as_bytes())
+});
 
 pub static PEPPER: Lazy<String> = Lazy::new(|| std::env::var("PEPPER").expect("PEPPER must be set"));
 

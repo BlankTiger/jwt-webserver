@@ -4,3 +4,4 @@ pub mod models;
 pub mod services;
 pub mod setup;
 pub mod app;
+pub mod middleware;

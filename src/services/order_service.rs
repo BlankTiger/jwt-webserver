@@ -14,6 +14,15 @@ use async_trait::async_trait;
 
 pub struct OrderService;
 
+macro_rules! create_orders {
+    ($a: expr, $b: expr) => {
+        OrderService::create_orders($a, $b, false)
+    };
+    ($a: expr, $b: expr, true) => {
+        OrderService::create_orders($a, $b, true)
+    };
+}
+
 #[async_trait]
 impl MockFillable for OrderService {
     async fn fill_with_mocked_data(&self) -> Result<()> {
@@ -23,10 +32,10 @@ impl MockFillable for OrderService {
         let customers_in_db = CustomerService::get_all_customers(&pool).await?;
 
         let new_order = Order {
+            id: 1,
             customer_id: customers_in_db[0].id,
             status: "In progress".to_string(),
             created_at: Local::now().naive_local(),
-            ..Default::default()
         };
         let mut products_in_order = HashMap::new();
         products_in_order.insert(&products_in_db[0], 1);
@@ -34,10 +43,10 @@ impl MockFillable for OrderService {
         customer_orders.insert(new_order, products_in_order);
 
         let new_order = Order {
+            id: 2,
             customer_id: customers_in_db[0].id,
             status: "In progress".to_string(),
             created_at: Local::now().naive_local(),
-            ..Default::default()
         };
         let mut products_in_order = HashMap::new();
         products_in_order.insert(&products_in_db[0], 6);
@@ -45,17 +54,17 @@ impl MockFillable for OrderService {
         customer_orders.insert(new_order, products_in_order);
 
         let new_order = Order {
+            id: 3,
             customer_id: customers_in_db[1].id,
             status: "New".to_string(),
             created_at: Local::now().naive_local(),
-            ..Default::default()
         };
         let mut products_in_order = HashMap::new();
         products_in_order.insert(&products_in_db[0], 3);
         products_in_order.insert(&products_in_db[1], 4);
         customer_orders.insert(new_order, products_in_order);
-        OrderService::create_orders(&pool, &customer_orders).await?;
-
+        create_orders!(&pool, &customer_orders, true).await?;
+        // OrderService::create_orders(&pool, &customer_orders).await?;
         Ok(())
     }
 }
@@ -76,16 +85,32 @@ impl OrderService {
     pub async fn create_orders(
         pool: &PgPool,
         customer_orders: &HashMap<Order, HashMap<&Product, i32>>,
+        with_id: bool,
     ) -> Result<()> {
         for (new_order, products_in_order) in customer_orders.iter() {
-            let curr_order_row: (i32,) = sqlx::query_as(
-                "insert into orders (customer_id, status, created_at) values ($1, $2, $3) returning id",
-            )
-                .bind(new_order.customer_id)
-                .bind(&new_order.status)
-                .bind(new_order.created_at)
-                .fetch_one(pool)
-                .await?;
+            let curr_order_row: (i32,) = match with_id {
+                true => {
+                    sqlx::query_as(
+                    "insert into orders (id, customer_id, status, created_at) values ($1, $2, $3, $4) returning id",
+                )
+                    .bind(new_order.id)
+                    .bind(new_order.customer_id)
+                    .bind(&new_order.status)
+                    .bind(new_order.created_at)
+                    .fetch_one(pool)
+                    .await?
+                }
+                false => {
+                    sqlx::query_as(
+                    "insert into orders (customer_id, status, created_at) values ($1, $2, $3) returning id",
+                )
+                    .bind(new_order.customer_id)
+                    .bind(&new_order.status)
+                    .bind(new_order.created_at)
+                    .fetch_one(pool)
+                    .await?
+                }
+            };
             let curr_order_id = curr_order_row.0;
 
             let products_in_order: Vec<ProductInOrder> = products_in_order

@@ -9,26 +9,35 @@ use tracing::info;
 
 pub struct ProductService;
 
+macro_rules! create_products {
+    ($a: expr, $b: expr) => {
+        ProductService::create_products($a, $b, false)
+    };
+    ($a: expr, $b: expr, true) => {
+        ProductService::create_products($a, $b, true)
+    };
+}
+
 #[async_trait]
 impl MockFillable for ProductService {
     async fn fill_with_mocked_data(&self) -> Result<()> {
         let new_products = [
             Product {
+                id: 1,
                 name: "Product 1".to_string(),
                 price: 1,
                 available: true,
-                ..Default::default()
             },
             Product {
+                id: 2,
                 name: "Product 2".to_string(),
                 price: 2,
                 available: true,
-                ..Default::default()
             },
         ];
 
         let pool = get_pool().await?;
-        ProductService::create_products(&pool, &new_products).await?;
+        create_products!(&pool, &new_products, true).await?;
         Ok(())
     }
 }
@@ -70,17 +79,42 @@ impl ProductService {
         Ok(())
     }
 
-    pub async fn create_products(pool: &PgPool, new_products: &[Product]) -> Result<()> {
-        let mut query_builder = QueryBuilder::new("insert into products (name, price, available) ");
-        query_builder.push_values(
-            new_products.iter().take(PG_LIMIT as usize / 3),
-            |mut builder, product| {
-                builder
-                    .push_bind(&product.name)
-                    .push_bind(product.price)
-                    .push_bind(product.available);
-            },
-        );
+    pub async fn create_products(
+        pool: &PgPool,
+        new_products: &[Product],
+        with_id: bool,
+    ) -> Result<()> {
+        let mut query_builder = match with_id {
+            true => {
+                let mut query_builder =
+                    QueryBuilder::new("insert into products (id, name, price, available) ");
+                query_builder.push_values(
+                    new_products.iter().take(PG_LIMIT as usize / 4),
+                    |mut builder, product| {
+                        builder
+                            .push_bind(product.id)
+                            .push_bind(&product.name)
+                            .push_bind(product.price)
+                            .push_bind(product.available);
+                    },
+                );
+                query_builder
+            }
+            false => {
+                let mut query_builder =
+                    QueryBuilder::new("insert into products (name, price, available) ");
+                query_builder.push_values(
+                    new_products.iter().take(PG_LIMIT as usize / 3),
+                    |mut builder, product| {
+                        builder
+                            .push_bind(&product.name)
+                            .push_bind(product.price)
+                            .push_bind(product.available);
+                    },
+                );
+                query_builder
+            }
+        };
 
         info!("Executing group insert query: {}", query_builder.sql());
         let query = query_builder.build();

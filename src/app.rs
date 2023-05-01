@@ -3,13 +3,14 @@ use axum::{
     http::StatusCode,
     routing::{get, patch, post, put},
     Router,
+    middleware,
 };
 use color_eyre::Result;
 use std::env;
 use std::time::Duration;
 use tower::{BoxError, ServiceBuilder};
 
-use crate::{controllers::*, db_actions::get_pool};
+use crate::{controllers::*, db_actions::get_pool, middleware::*};
 
 pub type DbPool = sqlx::PgPool;
 pub struct App;
@@ -39,10 +40,11 @@ impl App {
 
     fn build_router(self) -> Router<DbPool> {
         let api_routes = Router::new()
-            .nest("/admin", Routes::admin_routes())
             .nest("/product", Routes::product_routes())
             .nest("/order", Routes::order_routes())
-            .nest("/customer", Routes::customer_routes());
+            .nest("/customer", Routes::customer_routes())
+            .nest("/user", Routes::user_routes())
+            .nest("/admin", Routes::admin_routes());
 
         self.add_error_handler(Router::new().nest("/api", api_routes))
     }
@@ -80,10 +82,12 @@ impl Routes {
         Router::new()
             .route("/:id", get(CustomerController::get_customer))
             .route("/all", get(CustomerController::get_all_customers))
+            .route_layer(middleware::from_fn(middleware_require_customer_role))
     }
 
     fn order_routes() -> Router<DbPool> {
         Router::new()
+            .route("/", post(OrderController::create_order))
             .route("/:id", get(OrderController::get_order))
             .route("/all", get(OrderController::get_all_orders))
     }
@@ -96,8 +100,14 @@ impl Routes {
             .route("/customer", post(CustomerController::create_customer))
             .route("/customer/:id", put(CustomerController::update_customer))
             .route("/customer/:id", patch(CustomerController::partial_update_customer))
-            .route("/order", post(OrderController::create_order))
             .route("/order/:id", put(OrderController::update_order))
             .route("/order/:id", patch(OrderController::partial_update_order))
+            .route_layer(middleware::from_fn(middleware_require_admin_role))
+    }
+
+    fn user_routes() -> Router<DbPool> {
+        Router::new()
+            .route("/authorize", post(UserController::authorize))
+            .route("/register", post(UserController::create_user))
     }
 }

@@ -21,7 +21,7 @@ POST http://localhost:3000/api/admin/customer
 	"address": "Some address"
 }
 
-POST http://localhost:3000/api/admin/order
+POST http://localhost:3000/api/order
 {
 	"id": 0,
 	"customer_id": 35,
@@ -34,13 +34,6 @@ POST http://localhost:3000/api/admin/order
 }
 
 
-PUT http://localhost:3000/api/admin/customer/35
-{
-	"id": 35,
-	"name": "Newer customer",
-	"address": "Some address"
-}
-
 PUT http://localhost:3000/api/admin/product/35
 {
 	"id": 35,
@@ -48,6 +41,14 @@ PUT http://localhost:3000/api/admin/product/35
 	"price": 600,
 	"available": true
 }
+
+PUT http://localhost:3000/api/admin/customer/35
+{
+	"id": 35,
+	"name": "Newer customer",
+	"address": "Some address"
+}
+
 
 PUT http://localhost:3000/api/admin/order/52
 {
@@ -62,14 +63,14 @@ PUT http://localhost:3000/api/admin/order/52
 }
 
 
-PATCH http://localhost:3000/api/admin/customer/35
-{
-	"address": "Some other address"
-}
-
 PATCH http://localhost:3000/api/admin/product/35
 {
 	"price": 1000
+}
+
+PATCH http://localhost:3000/api/admin/customer/35
+{
+	"address": "Some other address"
 }
 
 PATCH http://localhost:3000/api/admin/order/52
