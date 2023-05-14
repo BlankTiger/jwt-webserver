@@ -10,7 +10,7 @@ impl TokenResponse {
     pub fn new(token: String) -> Self {
         TokenResponse {
             token,
-            token_type: "bearer".to_string(),
+            token_type: "Bearer".to_string(),
         }
     }
 }

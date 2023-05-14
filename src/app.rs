@@ -74,13 +74,13 @@ struct Routes;
 impl Routes {
     fn product_routes() -> Router<DbPool> {
         Router::new()
-            .route("/:id", get(ProductController::get_product))
+            .route("/", get(ProductController::get_product))
             .route("/all", get(ProductController::get_all_products))
     }
 
     fn customer_routes() -> Router<DbPool> {
         Router::new()
-            .route("/:id", get(CustomerController::get_customer))
+            .route("/", get(CustomerController::get_customer))
             .route("/all", get(CustomerController::get_all_customers))
             .route_layer(middleware::from_fn(middleware_require_customer_role))
     }
@@ -88,20 +88,20 @@ impl Routes {
     fn order_routes() -> Router<DbPool> {
         Router::new()
             .route("/", post(OrderController::create_order))
-            .route("/:id", get(OrderController::get_order))
+            .route("/", get(OrderController::get_order))
             .route("/all", get(OrderController::get_all_orders))
     }
 
     fn admin_routes() -> Router<DbPool> {
         Router::new()
             .route("/product", post(ProductController::create_product))
-            .route("/product/:id", put(ProductController::update_product))
-            .route("/product/:id", patch(ProductController::partial_update_product))
+            .route("/product/", put(ProductController::update_product))
+            .route("/product/", patch(ProductController::partial_update_product))
             .route("/customer", post(CustomerController::create_customer))
-            .route("/customer/:id", put(CustomerController::update_customer))
-            .route("/customer/:id", patch(CustomerController::partial_update_customer))
-            .route("/order/:id", put(OrderController::update_order))
-            .route("/order/:id", patch(OrderController::partial_update_order))
+            .route("/customer/", put(CustomerController::update_customer))
+            .route("/customer/", patch(CustomerController::partial_update_customer))
+            .route("/order/", put(OrderController::update_order))
+            .route("/order/", patch(OrderController::partial_update_order))
             .route_layer(middleware::from_fn(middleware_require_admin_role))
     }
 

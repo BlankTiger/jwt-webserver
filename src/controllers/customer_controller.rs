@@ -1,10 +1,7 @@
+use crate::models::QueryIdParam;
 use crate::{app::DbPool, models::Customer};
-use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-    response::IntoResponse,
-    Json,
-};
+use axum::extract::Query;
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde_json::Value;
 use tracing::{info, warn};
 
@@ -15,7 +12,7 @@ pub struct CustomerController;
 impl CustomerController {
     pub async fn get_customer(
         State(pool): State<DbPool>,
-        Path(id): Path<i32>,
+        Query(QueryIdParam { id }): Query<QueryIdParam>,
     ) -> Result<impl IntoResponse, StatusCode> {
         let response = Json(
             CustomerService::get_customer(&pool, id)
@@ -59,7 +56,7 @@ impl CustomerController {
 
     pub async fn update_customer(
         State(pool): State<DbPool>,
-        Path(id): Path<i32>,
+        Query(QueryIdParam { id }): Query<QueryIdParam>,
         Json(customer): Json<Customer>,
     ) -> Result<impl IntoResponse, StatusCode> {
         if id != customer.id {
@@ -79,7 +76,7 @@ impl CustomerController {
 
     pub async fn partial_update_customer(
         State(pool): State<DbPool>,
-        Path(id): Path<i32>,
+        Query(QueryIdParam { id }): Query<QueryIdParam>,
         Json(mut body): Json<Value>,
     ) -> Result<impl IntoResponse, StatusCode> {
         let body_map = body.as_object_mut().ok_or(StatusCode::BAD_REQUEST)?;

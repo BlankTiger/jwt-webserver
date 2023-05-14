@@ -1,6 +1,7 @@
+use crate::models::QueryIdParam;
 use crate::{app::DbPool, models::*};
 use axum::{
-    extract::{Path, State},
+    extract::{Query, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
@@ -16,7 +17,7 @@ pub struct OrderController;
 impl OrderController {
     pub async fn get_order(
         State(pool): State<DbPool>,
-        Path(id): Path<i32>,
+        Query(QueryIdParam { id }): Query<QueryIdParam>,
     ) -> Result<impl IntoResponse, StatusCode> {
         let response = Json(OrderService::get_order(&pool, id).await.map_err(|e| {
             warn!("{e}");
@@ -54,7 +55,7 @@ impl OrderController {
 
     pub async fn update_order(
         State(pool): State<DbPool>,
-        Path(id): Path<i32>,
+        Query(QueryIdParam { id }): Query<QueryIdParam>,
         Json(order): Json<OrderWithProducts>,
     ) -> Result<impl IntoResponse, StatusCode> {
         if id != order.id {
@@ -75,7 +76,7 @@ impl OrderController {
 
     pub async fn partial_update_order(
         State(pool): State<DbPool>,
-        Path(id): Path<i32>,
+        Query(QueryIdParam { id }): Query<QueryIdParam>,
         Json(mut body): Json<Value>,
     ) -> Result<impl IntoResponse, StatusCode> {
         let body_map = body.as_object_mut().ok_or(StatusCode::BAD_REQUEST)?;
